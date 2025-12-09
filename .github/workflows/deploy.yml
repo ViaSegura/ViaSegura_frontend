@@ -52,7 +52,7 @@ jobs:
       - name: Build and push Docker image to ECR
         env:
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
-          ECR_REPOSITORY: via-segura-frontend
+          ECR_REPOSITORY: viasegura-frontend
           IMAGE_TAG: ${{ github.sha }}
           ENVIRONMENT: ${{ steps.env.outputs.ENVIRONMENT }}
         run: |
@@ -74,7 +74,7 @@ jobs:
           EC2_USER: ${{ steps.env.outputs.EC2_USER }}
           SSH_KEY: ${{ steps.env.outputs.SSH_KEY }}
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
-          ECR_REPOSITORY: via-segura-frontend
+          ECR_REPOSITORY: viasegura-frontend
           IMAGE_TAG: ${{ github.sha }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ENVIRONMENT: ${{ steps.env.outputs.ENVIRONMENT }}
