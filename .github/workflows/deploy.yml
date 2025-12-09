@@ -106,7 +106,7 @@ jobs:
             docker-compose up -d app-frontend
             
             echo "🧹 Limpando imagens antigas..."
-            docker image prune -af --filter "until=24h"
+            docker image prune -af --filter "until=24h" 
             
             echo "✅ Deploy concluído com sucesso!"
             echo "📊 Status dos containers:"
