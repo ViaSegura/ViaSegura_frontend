@@ -102,8 +102,8 @@ jobs:
             echo "📁 Navegando para diretório da aplicação..."
             cd /home/ubuntu/viasegura || cd ~/viasegura || { echo "❌ Diretório não encontrado"; exit 1; }
             
-            echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.IMAGE_TAG }}
-            export FRONTEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/viasegura-frontend:${{ steps.env.outputs.IMAGE_TAG }}}
+            echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            export FRONTEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}}
             
             echo "⬇️ Pulling nova imagem..."
             docker pull $FRONTEND_IMAGE
