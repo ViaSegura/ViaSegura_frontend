@@ -91,22 +91,25 @@ jobs:
           
           echo "Deploying to $ENVIRONMENT environment..."
           
+          # Definir a imagem completa
+          FULL_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          
           # Conectar via SSH e atualizar container
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'ENDSSH'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << ENDSSH
             set -e
             
             echo "🔐 Login no ECR..."
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-              docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
+            aws ecr get-login-password --region ${AWS_REGION} | \
+              docker login --username AWS --password-stdin ${ECR_REGISTRY}
             
             echo "📁 Navegando para diretório da aplicação..."
             cd /home/ubuntu/viasegura || cd ~/viasegura || { echo "❌ Diretório não encontrado"; exit 1; }
             
-            echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-            export FRONTEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}}
+            echo "🎯 Definindo imagem: ${FULL_IMAGE}"
+            export FRONTEND_IMAGE="${FULL_IMAGE}"
             
             echo "⬇️ Pulling nova imagem..."
-            docker pull $FRONTEND_IMAGE
+            docker pull \${FRONTEND_IMAGE}
             
             echo "🔄 Atualizando container app-frontend..."
             docker-compose up -d app-frontend
