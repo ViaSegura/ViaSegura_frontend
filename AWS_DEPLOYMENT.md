@@ -304,8 +304,3 @@ Se encontrar problemas, contate o time de DevOps com:
 2. Logs completos do erro
 3. Ambiente afetado (staging/production)
 4. Commit SHA do deploy
-
----
-
-**Documentação criada**: 2025-12-01  
-**Última atualização**: 2025-12-01
