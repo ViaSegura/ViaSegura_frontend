@@ -15,6 +15,12 @@ RUN yarn --frozen-lockfile
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_MAP_TILE_URL
+
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MAP_TILE_URL=$NEXT_PUBLIC_MAP_TILE_URL
+
 # Copiar dependências instaladas
 COPY --from=deps /app/node_modules ./node_modules
 # Copiar código fonte
@@ -32,6 +38,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_MAP_TILE_URL=${NEXT_PUBLIC_MAP_TILE_URL}
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN addgroup --system --gid 1001 nodejs
