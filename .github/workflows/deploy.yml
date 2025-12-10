@@ -51,7 +51,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       
-      # 5. Build e Push da imagem Docker para ECR
+      # 5. Build e Push da imagem Docker para ECR 
       - name: Build and push Docker image to ECR
         env:
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
