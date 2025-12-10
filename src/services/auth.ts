@@ -1,54 +1,57 @@
-"use server";
+import { fetchAPI } from ".";
+import { setCookieLogin } from "@viasegura/utils/auth";
+import { loginFormInputsProps } from "@viasegura/modules/auth/components/login-form/types";
+import { registerFormInputsProps } from "@viasegura/modules/auth/components/register-form/types";
 
-import { cookies } from "next/headers";
-import {
-  COOKIE_TOKEN,
-  COOKIE_LOGIN,
-  COOKIE_REFRESH_TOKEN,
-} from "@viasegura/constants/cookies";
-import { SetCookiesLoginProps } from "@viasegura/types/auth";
+export const authRegister = async ({
+  username,
+  email,
+  password,
+}: registerFormInputsProps) => {
+  const registerRequest = {
+    name: username,
+    email,
+    password,
+  };
 
-interface LoginApiResponse {
-  accessToken: string;
-  refreshToken: string;
-  username: string;
-}
-
-export const setCookieLogin = async ({ response }: SetCookiesLoginProps) => {
-  const apiData: LoginApiResponse = await response.json();
-  const { accessToken, refreshToken, username } = apiData;
-
-  const cookieStore = await cookies();
-
-  cookieStore.set(COOKIE_TOKEN, accessToken, {
-    path: "/",
-    maxAge: 60 * 60,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+  const response = await fetchAPI({
+    url: "users",
+    options: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(registerRequest),
+    },
   });
 
-  cookieStore.set(COOKIE_REFRESH_TOKEN, refreshToken, {
-    path: "/",
-    maxAge: 60 * 60,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  cookieStore.set(COOKIE_LOGIN, username, {
-    path: "/",
-    maxAge: 60 * 60,
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+  return response.status === 201;
 };
 
-export const clearToken = async () => {
-  const cookieStore = await cookies();
-  
-  cookieStore.delete(COOKIE_TOKEN);
-  cookieStore.delete(COOKIE_REFRESH_TOKEN);
-  cookieStore.delete(COOKIE_LOGIN);
+export const authLogin = async ({
+  username,
+  password,
+}: loginFormInputsProps): Promise<boolean> => {
+  const loginRequest = {
+    username,
+    password,
+  };
+
+  const response = await fetchAPI({
+    url: "auth/login",
+    options: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(loginRequest),
+    },
+  });
+
+  if (response.status === 200) {
+    await setCookieLogin({ response });
+
+    return true;
+  }
+  return false;
 };
