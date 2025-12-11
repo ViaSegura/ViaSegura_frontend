@@ -63,6 +63,8 @@ const HeatmapMap: React.FC<HeatmapMapProps> = ({ data }) => {
     };
   }, [updateGradient]);
 
+  console.log("teste", process.env.NEXT_PUBLIC_MAP_TILE_URL);
+
   return (
     <MapContainer
       center={[-8.05428, -34.8813]}
