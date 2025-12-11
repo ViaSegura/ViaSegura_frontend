@@ -21,6 +21,7 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "ENVIRONMENT=production" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
             echo "EC2_HOST=${{ secrets.EC2_PROD_HOST }}" >> $GITHUB_OUTPUT
             echo "EC2_USER=${{ secrets.EC2_PROD_USER }}" >> $GITHUB_OUTPUT
             echo "SSH_KEY<<EOF" >> $GITHUB_OUTPUT
@@ -28,12 +29,14 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "ENVIRONMENT=staging" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
             echo "EC2_HOST=${{ secrets.EC2_STAGING_HOST }}" >> $GITHUB_OUTPUT
             echo "EC2_USER=${{ secrets.EC2_STAGING_USER }}" >> $GITHUB_OUTPUT
             echo "SSH_KEY<<EOF" >> $GITHUB_OUTPUT
             echo "${{ secrets.EC2_STAGING_SSH_KEY }}" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           fi
+          echo "GIT_SHA=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
       
       # 3. Configurar credenciais AWS
       - name: Configure AWS credentials
@@ -48,21 +51,29 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       
-      # 5. Build e Push da imagem Docker para ECR
+      # 5. Build e Push da imagem Docker para ECR 
       - name: Build and push Docker image to ECR
         env:
+          EC2_HOST: ${{ steps.env.outputs.EC2_HOST }}
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
-          ECR_REPOSITORY: via-segura-frontend
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: viasegura-frontend
+          IMAGE_TAG: ${{ steps.env.outputs.IMAGE_TAG }}
+          GIT_SHA: ${{ steps.env.outputs.GIT_SHA }}
           ENVIRONMENT: ${{ steps.env.outputs.ENVIRONMENT }}
         run: |
           echo "Building Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://$EC2_HOST:8080 \
+            --build-arg NEXT_PUBLIC_MAP_TILE_URL="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" \
+            --build-arg NODE_ENV=production \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:${GIT_SHA}
           
           echo "Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GIT_SHA}
           
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "✅ Image tagged: $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest"
@@ -74,8 +85,8 @@ jobs:
           EC2_USER: ${{ steps.env.outputs.EC2_USER }}
           SSH_KEY: ${{ steps.env.outputs.SSH_KEY }}
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
-          ECR_REPOSITORY: via-segura-frontend
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: viasegura-frontend
+          IMAGE_TAG: ${{ steps.env.outputs.IMAGE_TAG }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ENVIRONMENT: ${{ steps.env.outputs.ENVIRONMENT }}
         run: |
@@ -85,28 +96,31 @@ jobs:
           
           echo "Deploying to $ENVIRONMENT environment..."
           
+          # Definir a imagem completa
+          FULL_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          
           # Conectar via SSH e atualizar container
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'ENDSSH'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << ENDSSH
             set -e
             
             echo "🔐 Login no ECR..."
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-              docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
+            aws ecr get-login-password --region ${AWS_REGION} | \
+              docker login --username AWS --password-stdin ${ECR_REGISTRY}
             
             echo "📁 Navegando para diretório da aplicação..."
             cd /home/ubuntu/viasegura || cd ~/viasegura || { echo "❌ Diretório não encontrado"; exit 1; }
             
-            echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
-            export FRONTEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/via-segura-frontend:${{ github.sha }}
+            echo "🎯 Definindo imagem: ${FULL_IMAGE}"
+            export FRONTEND_IMAGE="${FULL_IMAGE}"
             
             echo "⬇️ Pulling nova imagem..."
-            docker pull $FRONTEND_IMAGE
+            docker pull \${FRONTEND_IMAGE}
             
             echo "🔄 Atualizando container app-frontend..."
             docker-compose up -d app-frontend
             
             echo "🧹 Limpando imagens antigas..."
-            docker image prune -af --filter "until=24h"
+            docker image prune -af --filter "until=24h" 
             
             echo "✅ Deploy concluído com sucesso!"
             echo "📊 Status dos containers:"

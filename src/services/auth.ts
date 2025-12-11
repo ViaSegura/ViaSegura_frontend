@@ -1,3 +1,5 @@
+"use server";
+
 import { fetchAPI } from ".";
 import { setCookieLogin } from "@viasegura/utils/auth";
 import { loginFormInputsProps } from "@viasegura/modules/auth/components/login-form/types";

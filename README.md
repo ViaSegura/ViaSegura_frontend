@@ -68,6 +68,30 @@ Para iniciar o servidor de desenvolvimento:
     ```
     Abra http://localhost:3000 (ou a porta indicada no seu terminal) no seu navegador para ver a aplicação.
 
+## 🧪 Testes
+
+O projeto utiliza **Jest** e **Testing Library** para testes unitários e de componentes.
+
+### Executar os testes
+
+Para rodar todos os testes uma vez:
+
+```bash
+yarn test
+# ou
+npm run test
+```
+
+### Executar testes em modo watch
+
+Para rodar os testes em modo de observação (watch mode), que reexecuta os testes automaticamente quando arquivos são modificados:
+
+```bash
+yarn test:watch
+# ou
+npm run test:watch
+```
+
 ## 📂 Estrutura
 
 ```

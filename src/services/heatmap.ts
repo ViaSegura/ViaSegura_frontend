@@ -1,6 +1,4 @@
-import { fetchAPI } from ".";
-import { getCookie } from "cookies-next";
-import { COOKIE_TOKEN } from "@viasegura/constants/cookies";
+import { getAuthenticatedFetch } from "./server-fetch";
 
 import {
   ExportHeatmapParams,
@@ -16,8 +14,6 @@ import {
   buildHeatmapQueryParams,
 } from "@viasegura/utils/heatmap-params";
 
-let token = getCookie(COOKIE_TOKEN);
-
 export const heatmap = async (
   params?: HeatmapParams
 ): Promise<HeatmapResponse> => {
@@ -26,51 +22,24 @@ export const heatmap = async (
     ? `${HEATMAP_ENDPOINTS.GET}?${queryString}`
     : HEATMAP_ENDPOINTS.GET;
 
-  const response = await fetchAPI({
-    url: url,
-    options: {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  const response = await getAuthenticatedFetch(url);
 
   if (!response.ok) return EMPTY_RESPONSE as HeatmapResponse;
 
-  return response.json().catch(() => EMPTY_RESPONSE as HeatmapResponse);
+  return response.data || EMPTY_RESPONSE;
 };
 
 export const neighborhood = async () => {
-  const response = await fetchAPI({
-    url: `h3_grid/neighborhoods`,
-    options: {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  const response = await getAuthenticatedFetch(`h3_grid/neighborhoods`);
 
-  return response.json();
+  return response.data;
 };
 
 export const exportHeatmapData = async (params?: ExportHeatmapParams) => {
   const queryString = buildExportQueryParams(params);
   const url = `${HEATMAP_ENDPOINTS.EXPORT}?${queryString}`;
 
-  const response = await fetchAPI({
-    url: url,
-    options: {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  const response = await getAuthenticatedFetch(url);
 
-  return response.json();
+  return response.data;
 };

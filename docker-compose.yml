@@ -1,15 +1,14 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_MAP_TILE_URL=${NEXT_PUBLIC_MAP_TILE_URL}
     container_name: viasegura-frontend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
     env_file:
       - .env
     restart: unless-stopped
