@@ -20,11 +20,13 @@ export const setCookieLogin = async ({ response }: SetCookiesLoginProps) => {
 
   const cookieStore = await cookies();
 
+  const isProductionSecure = false;
+
   cookieStore.set(COOKIE_TOKEN, accessToken, {
     path: "/",
     maxAge: 60 * 60,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProductionSecure,
     sameSite: "lax",
   });
 
@@ -32,22 +34,22 @@ export const setCookieLogin = async ({ response }: SetCookiesLoginProps) => {
     path: "/",
     maxAge: 60 * 60,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProductionSecure,
+    sameSite: "lax",
   });
 
   cookieStore.set(COOKIE_LOGIN, username, {
     path: "/",
     maxAge: 60 * 60,
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProductionSecure,
     sameSite: "lax",
   });
 };
 
 export const clearToken = async () => {
   const cookieStore = await cookies();
-  
+
   cookieStore.delete(COOKIE_TOKEN);
   cookieStore.delete(COOKIE_REFRESH_TOKEN);
   cookieStore.delete(COOKIE_LOGIN);
