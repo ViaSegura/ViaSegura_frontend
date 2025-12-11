@@ -49,10 +49,7 @@ export const LoginForm = () => {
         toast.success("Seja bem-vindo!", {
           position: "bottom-right",
         });
-        
-        setTimeout(() => {
-          window.location.replace("/heatmap");
-        }, 300);
+        window.location.href = "/heatmap";
       } else {
         toast.error("Usuário ainda não cadastrado", {
           position: "bottom-right",
