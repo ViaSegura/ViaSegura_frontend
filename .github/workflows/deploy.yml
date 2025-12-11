@@ -64,7 +64,7 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=http://$EC2_HOST:8080 \
             --build-arg NEXT_PUBLIC_MAP_TILE_URL="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" \
-            --build-arg NODE_ENV=production
+            --build-arg NODE_ENV=production \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:${GIT_SHA}
