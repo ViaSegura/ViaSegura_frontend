@@ -3,18 +3,18 @@ name: Deploy Frontend to AWS EC2
 on:
   push:
     branches:
-      - main      # Production
-      - staging   # Staging
+      - main # Production
+      - staging # Staging
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       # 1. Checkout do código
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       # 2. Determinar ambiente baseado na branch
       - name: Set environment variables
         id: env
@@ -37,7 +37,7 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           fi
           echo "GIT_SHA=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-      
+
       # 3. Configurar credenciais AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -45,15 +45,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      
+
       # 4. Login no Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-      
-      # 5. Build e Push da imagem Docker para ECR 
+
+      # 5. Build e Push da imagem Docker para ECR
       - name: Build and push Docker image to ECR
         env:
+          EC2_HOST: ${{ steps.env.outputs.EC2_HOST }}
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
           ECR_REPOSITORY: viasegura-frontend
           IMAGE_TAG: ${{ steps.env.outputs.IMAGE_TAG }}
@@ -62,17 +63,23 @@ jobs:
         run: |
           echo "Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://$EC2_HOST:8080 \
+            --build-arg NEXT_PUBLIC_MAP_TILE_URL="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:${GIT_SHA}
-          
+
           echo "Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GIT_SHA}
-          
+
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "✅ Image tagged: $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest"
-      
+
       # 6. Deploy na EC2 via SSH
       - name: Deploy to EC2 (${{ steps.env.outputs.ENVIRONMENT }})
         env:
@@ -88,12 +95,12 @@ jobs:
           # Salvar chave SSH em arquivo temporário
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
-          
+
           echo "Deploying to $ENVIRONMENT environment..."
-          
+
           # Definir a imagem completa
           FULL_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-          
+
           # Conectar via SSH e atualizar container
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << ENDSSH
             set -e
@@ -121,8 +128,8 @@ jobs:
             echo "📊 Status dos containers:"
             docker-compose ps
           ENDSSH
-          
+
           # Remover chave SSH temporária
           rm -f private_key.pem
-          
+
           echo "🎉 Deploy para $ENVIRONMENT finalizado!"

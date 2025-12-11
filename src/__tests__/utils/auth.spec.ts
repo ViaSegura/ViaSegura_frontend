@@ -1,14 +1,19 @@
 import { setCookieLogin, clearToken } from "@viasegura/utils/auth";
-import { setCookie, deleteCookie } from "cookies-next";
 import {
   COOKIE_TOKEN,
   COOKIE_LOGIN,
   COOKIE_REFRESH_TOKEN,
 } from "@viasegura/constants/cookies";
 
-jest.mock("cookies-next", () => ({
-  setCookie: jest.fn(),
-  deleteCookie: jest.fn(),
+// Mock Next.js server-side cookies
+const mockSet = jest.fn();
+const mockDelete = jest.fn();
+
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(() => ({
+    set: mockSet,
+    delete: mockDelete,
+  })),
 }));
 
 describe("Auth Utils", () => {
@@ -30,35 +35,45 @@ describe("Auth Utils", () => {
 
       await setCookieLogin({ response: mockResponse });
 
-      expect(setCookie).toHaveBeenCalledTimes(3);
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockSet).toHaveBeenCalledTimes(3);
+      expect(mockSet).toHaveBeenCalledWith(
         COOKIE_TOKEN,
         mockData.accessToken,
-        expect.any(Object)
+        expect.objectContaining({
+          path: "/",
+          maxAge: 60 * 60,
+          sameSite: "lax",
+        })
       );
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockSet).toHaveBeenCalledWith(
         COOKIE_REFRESH_TOKEN,
         mockData.refreshToken,
-        expect.any(Object)
+        expect.objectContaining({
+          path: "/",
+          maxAge: 60 * 60,
+          sameSite: "strict",
+        })
       );
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockSet).toHaveBeenCalledWith(
         COOKIE_LOGIN,
         mockData.username,
-        expect.any(Object)
+        expect.objectContaining({
+          path: "/",
+          maxAge: 60 * 60,
+          sameSite: "lax",
+        })
       );
     });
   });
 
   describe("clearToken", () => {
-    test("should delete all auth cookies", () => {
-      clearToken();
+    test("should delete all auth cookies", async () => {
+      await clearToken();
 
-      expect(deleteCookie).toHaveBeenCalledTimes(3);
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_TOKEN, { path: "/" });
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_REFRESH_TOKEN, {
-        path: "/",
-      });
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_LOGIN, { path: "/" });
+      expect(mockDelete).toHaveBeenCalledTimes(3);
+      expect(mockDelete).toHaveBeenCalledWith(COOKIE_TOKEN);
+      expect(mockDelete).toHaveBeenCalledWith(COOKIE_REFRESH_TOKEN);
+      expect(mockDelete).toHaveBeenCalledWith(COOKIE_LOGIN);
     });
   });
 });

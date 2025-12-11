@@ -9,7 +9,10 @@
     "lint": "biome check",
     "format": "biome format --write",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "docker:dev": "docker-compose up --build",
+    "docker:fresh": "docker-compose down && docker-compose build --no-cache && docker-compose up",
+    "docker:stop": "docker-compose down"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
