@@ -1,4 +1,7 @@
+"use server";
+
 import { fetchAPI } from ".";
+import { setCookieLogin } from "@viasegura/utils/auth";
 import { loginFormInputsProps } from "@viasegura/modules/auth/components/login-form/types";
 import { registerFormInputsProps } from "@viasegura/modules/auth/components/register-form/types";
 
@@ -31,19 +34,26 @@ export const authLogin = async ({
   username,
   password,
 }: loginFormInputsProps): Promise<boolean> => {
-  try {
-    const response = await fetch("/api/auth/login", {
+  const loginRequest = {
+    username,
+    password,
+  };
+
+  const response = await fetchAPI({
+    url: "auth/login",
+    options: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
-    });
+      body: JSON.stringify(loginRequest),
+    },
+  });
 
-    const data = await response.json();
-    return data.success === true;
-  } catch (error) {
-    console.error("Login error:", error);
-    return false;
+  if (response.status === 200) {
+    await setCookieLogin({ response });
+
+    return true;
   }
+  return false;
 };
