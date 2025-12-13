@@ -1,0 +1,51 @@
+# Dependências
+node_modules
+npm-debug.log
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Cache
+.swc
+
+# Arquivos de desenvolvimento
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+.github
+
+# Testing
+coverage
+.nyc_output
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+**/__tests__/**
+**/__mocks__/**
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+LICENSE
+*.md
+docker-compose*.yml
+Dockerfile*

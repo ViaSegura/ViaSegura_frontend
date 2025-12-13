@@ -1,8 +1,8 @@
-import { fetchAPI } from "@viasegura/service/index";
-import { authRegister, authLogin } from "@viasegura/service/auth";
+import { fetchAPI } from "@viasegura/services/index";
+import { authRegister, authLogin } from "@viasegura/services/auth";
 import { setCookieLogin } from "@viasegura/utils/auth";
 
-jest.mock("@viasegura/service");
+jest.mock("@viasegura/services");
 jest.mock("@viasegura/utils/auth");
 
 beforeEach(() => {

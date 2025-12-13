@@ -33,7 +33,7 @@ import {
   heatmap,
   neighborhood,
   exportHeatmapData,
-} from "@viasegura/service/heatmap";
+} from "@viasegura/services/heatmap";
 import {
   HeatmapParams,
   HeatmapResponse,
@@ -63,11 +63,11 @@ const HeatMap = () => {
     });
 
     setDate(undefined);
-    fetchHeatmapData("");
+    fetchHeatmapData("", null);
   };
 
   const fetchHeatmapData = useCallback(
-    async (forceNeighborhood?: string) => {
+    async (forceNeighborhood?: string, forceDate?: Date | null) => {
       setIsLoading(true);
 
       try {
@@ -76,9 +76,21 @@ const HeatMap = () => {
             ? forceNeighborhood
             : filters.neighborhood;
 
+        const dateValue = forceDate === null ? undefined : forceDate || date;
+
         const requestParams: HeatmapParams = {
           neighborhood: neighborhoodValue,
         };
+
+        if (dateValue) {
+          const year = dateValue.getFullYear();
+          const month = dateValue.getMonth() + 1;
+
+          requestParams.start_year = year;
+          requestParams.start_month = month;
+          requestParams.end_year = year;
+          requestParams.end_month = month;
+        }
 
         const response = await heatmap(requestParams);
 
@@ -89,7 +101,7 @@ const HeatMap = () => {
         setIsLoading(false);
       }
     },
-    [filters]
+    [filters, date]
   );
 
   const fetchNeighborhoodsList = useCallback(async () => {

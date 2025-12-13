@@ -2,10 +2,9 @@ import {
   heatmap,
   neighborhood,
   exportHeatmapData,
-} from "@viasegura/service/heatmap";
+} from "@viasegura/services/heatmap";
 
-import { fetchAPI } from "@viasegura/service";
-import { getCookie } from "cookies-next";
+import { getAuthenticatedFetch } from "@viasegura/services/server-fetch";
 import {
   buildHeatmapQueryParams,
   buildExportQueryParams,
@@ -15,13 +14,9 @@ import {
   HEATMAP_ENDPOINTS,
 } from "@viasegura/constants/heatmap";
 
-jest.mock("@viasegura/service", () => ({
+jest.mock("@viasegura/services/server-fetch", () => ({
   __esModule: true,
-  fetchAPI: jest.fn(),
-}));
-
-jest.mock("cookies-next", () => ({
-  getCookie: jest.fn().mockReturnValue("fake-auth-token"),
+  getAuthenticatedFetch: jest.fn(),
 }));
 
 jest.mock("@viasegura/utils/heatmap-params", () => ({
@@ -30,19 +25,12 @@ jest.mock("@viasegura/utils/heatmap-params", () => ({
 }));
 
 describe("Heatmap Service", () => {
-  const mockToken = "fake-auth-token";
-  const mockFetchAPI = fetchAPI as jest.Mock;
+  const mockGetAuthenticatedFetch = getAuthenticatedFetch as jest.Mock;
   const mockBuildHeatmapParams = buildHeatmapQueryParams as jest.Mock;
   const mockBuildExportParams = buildExportQueryParams as jest.Mock;
-  const mockGetCookie = getCookie as jest.Mock;
-
-  beforeAll(() => {
-    mockGetCookie.mockReturnValue(mockToken);
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetCookie.mockReturnValue(mockToken);
   });
 
   describe("heatmap function", () => {
@@ -51,52 +39,46 @@ describe("Heatmap Service", () => {
       totalElements: 1,
     };
 
-    test("should call fetchAPI with correct URL (no params) and headers", async () => {
+    test("should call getAuthenticatedFetch with correct URL (no params)", async () => {
       mockBuildHeatmapParams.mockReturnValue("");
-      mockFetchAPI.mockResolvedValue({
+      mockGetAuthenticatedFetch.mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockSuccessResponse),
+        status: 200,
+        data: mockSuccessResponse,
       });
 
       const result = await heatmap();
 
       expect(mockBuildHeatmapParams).toHaveBeenCalledWith(undefined);
-      expect(mockFetchAPI).toHaveBeenCalledWith({
-        url: HEATMAP_ENDPOINTS.GET,
-        options: {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${mockToken}`,
-          },
-        },
-      });
+      expect(mockGetAuthenticatedFetch).toHaveBeenCalledWith(
+        HEATMAP_ENDPOINTS.GET
+      );
       expect(result).toEqual(mockSuccessResponse);
     });
 
-    test("should call fetchAPI with query params when provided", async () => {
+    test("should call getAuthenticatedFetch with query params when provided", async () => {
       const params = { start_year: 2023 };
       mockBuildHeatmapParams.mockReturnValue("start_year=2023");
-      mockFetchAPI.mockResolvedValue({
+      mockGetAuthenticatedFetch.mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockSuccessResponse),
+        status: 200,
+        data: mockSuccessResponse,
       });
 
       await heatmap(params);
 
       expect(mockBuildHeatmapParams).toHaveBeenCalledWith(params);
-      expect(mockFetchAPI).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: `${HEATMAP_ENDPOINTS.GET}?start_year=2023`,
-        })
+      expect(mockGetAuthenticatedFetch).toHaveBeenCalledWith(
+        `${HEATMAP_ENDPOINTS.GET}?start_year=2023`
       );
     });
 
-    test("should return EMPTY_RESPONSE if fetchAPI returns ok: false", async () => {
-      mockFetchAPI.mockResolvedValue({
+    test("should return EMPTY_RESPONSE if getAuthenticatedFetch returns ok: false", async () => {
+      mockBuildHeatmapParams.mockReturnValue("");
+      mockGetAuthenticatedFetch.mockResolvedValue({
         ok: false,
         status: 500,
-        json: jest.fn(),
+        data: null,
       });
 
       const result = await heatmap();
@@ -104,10 +86,12 @@ describe("Heatmap Service", () => {
       expect(result).toEqual(EMPTY_RESPONSE);
     });
 
-    test("should return EMPTY_RESPONSE if response.json() fails", async () => {
-      mockFetchAPI.mockResolvedValue({
+    test("should return EMPTY_RESPONSE if response.data is null", async () => {
+      mockBuildHeatmapParams.mockReturnValue("");
+      mockGetAuthenticatedFetch.mockResolvedValue({
         ok: true,
-        json: jest.fn().mockRejectedValue(new Error("Invalid JSON")),
+        status: 200,
+        data: null,
       });
 
       const result = await heatmap();
@@ -119,22 +103,17 @@ describe("Heatmap Service", () => {
   describe("neighborhood function", () => {
     test("should fetch neighborhoods list correctly", async () => {
       const mockNeighborhoods = ["Centro", "Boa Viagem"];
-      mockFetchAPI.mockResolvedValue({
-        json: jest.fn().mockResolvedValue(mockNeighborhoods),
+      mockGetAuthenticatedFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockNeighborhoods,
       });
 
       const result = await neighborhood();
 
-      expect(mockFetchAPI).toHaveBeenCalledWith({
-        url: "h3_grid/neighborhoods",
-        options: {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${mockToken}`,
-          },
-        },
-      });
+      expect(mockGetAuthenticatedFetch).toHaveBeenCalledWith(
+        "h3_grid/neighborhoods"
+      );
       expect(result).toEqual(mockNeighborhoods);
     });
   });
@@ -145,23 +124,18 @@ describe("Heatmap Service", () => {
       const mockResponse = { base64: "xyz" };
 
       mockBuildExportParams.mockReturnValue("neighborhood=Centro");
-      mockFetchAPI.mockResolvedValue({
-        json: jest.fn().mockResolvedValue(mockResponse),
+      mockGetAuthenticatedFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockResponse,
       });
 
       const result = await exportHeatmapData(mockExportParams);
 
       expect(mockBuildExportParams).toHaveBeenCalledWith(mockExportParams);
-      expect(mockFetchAPI).toHaveBeenCalledWith({
-        url: `${HEATMAP_ENDPOINTS.EXPORT}?neighborhood=Centro`,
-        options: {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${mockToken}`,
-          },
-        },
-      });
+      expect(mockGetAuthenticatedFetch).toHaveBeenCalledWith(
+        `${HEATMAP_ENDPOINTS.EXPORT}?neighborhood=Centro`
+      );
       expect(result).toEqual(mockResponse);
     });
   });

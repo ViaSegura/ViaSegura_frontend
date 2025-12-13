@@ -2,11 +2,11 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { LoginForm } from "@viasegura/modules/auth/components/login-form/index";
-import { authLogin } from "@viasegura/service/auth";
+import { authLogin } from "@viasegura/services/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-jest.mock("@viasegura/service/auth", () => ({
+jest.mock("@viasegura/services/auth", () => ({
   authLogin: jest.fn(),
 }));
 

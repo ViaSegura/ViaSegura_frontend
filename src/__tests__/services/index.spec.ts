@@ -1,4 +1,4 @@
-import { fetchAPI } from "@viasegura/service/index";
+import { fetchAPI } from "@viasegura/services/index";
 
 const EXPECTED_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 

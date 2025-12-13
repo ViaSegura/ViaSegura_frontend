@@ -21,7 +21,7 @@ import { Input } from "@viasegura/components/ui/input";
 import { Label } from "@viasegura/components/ui/label";
 
 import { Loader } from "@viasegura/components/loader";
-import { authRegister } from "@viasegura/service/auth";
+import { authRegister } from "@viasegura/services/auth";
 import { Eye, EyeOff } from "lucide-react";
 import { registerSchema } from "./schemas";
 import { registerFormInputsProps } from "./types";

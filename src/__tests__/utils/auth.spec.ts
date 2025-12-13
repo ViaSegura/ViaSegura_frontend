@@ -1,15 +1,19 @@
-import { setCookieLogin, clearToken } from "@viasegura/utils/auth";
-import { setCookie, deleteCookie } from "cookies-next";
 import {
   COOKIE_TOKEN,
   COOKIE_LOGIN,
   COOKIE_REFRESH_TOKEN,
 } from "@viasegura/constants/cookies";
 
-jest.mock("cookies-next", () => ({
-  setCookie: jest.fn(),
-  deleteCookie: jest.fn(),
+const mockCookieStore = {
+  set: jest.fn(),
+  delete: jest.fn(),
+};
+
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(() => Promise.resolve(mockCookieStore)),
 }));
+
+import { setCookieLogin, clearToken } from "@viasegura/utils/auth";
 
 describe("Auth Utils", () => {
   beforeEach(() => {
@@ -30,35 +34,33 @@ describe("Auth Utils", () => {
 
       await setCookieLogin({ response: mockResponse });
 
-      expect(setCookie).toHaveBeenCalledTimes(3);
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockCookieStore.set).toHaveBeenCalledTimes(3);
+      expect(mockCookieStore.set).toHaveBeenCalledWith(
         COOKIE_TOKEN,
         mockData.accessToken,
-        expect.any(Object)
+        expect.objectContaining({ httpOnly: true })
       );
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockCookieStore.set).toHaveBeenCalledWith(
         COOKIE_REFRESH_TOKEN,
         mockData.refreshToken,
-        expect.any(Object)
+        expect.objectContaining({ httpOnly: true })
       );
-      expect(setCookie).toHaveBeenCalledWith(
+      expect(mockCookieStore.set).toHaveBeenCalledWith(
         COOKIE_LOGIN,
         mockData.username,
-        expect.any(Object)
+        expect.objectContaining({ httpOnly: false })
       );
     });
   });
 
   describe("clearToken", () => {
-    test("should delete all auth cookies", () => {
-      clearToken();
+    test("should delete all auth cookies", async () => {
+      await clearToken();
 
-      expect(deleteCookie).toHaveBeenCalledTimes(3);
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_TOKEN, { path: "/" });
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_REFRESH_TOKEN, {
-        path: "/",
-      });
-      expect(deleteCookie).toHaveBeenCalledWith(COOKIE_LOGIN, { path: "/" });
+      expect(mockCookieStore.delete).toHaveBeenCalledTimes(3);
+      expect(mockCookieStore.delete).toHaveBeenCalledWith(COOKIE_TOKEN);
+      expect(mockCookieStore.delete).toHaveBeenCalledWith(COOKIE_REFRESH_TOKEN);
+      expect(mockCookieStore.delete).toHaveBeenCalledWith(COOKIE_LOGIN);
     });
   });
 });

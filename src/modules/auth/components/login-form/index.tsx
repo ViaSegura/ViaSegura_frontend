@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { loginSchema } from "./schemas";
 import { loginFormInputsProps } from "./types";
 import { Button } from "@viasegura/components/ui/button";
-import { authLogin } from "@viasegura/service/auth";
+import { authLogin } from "@viasegura/services/auth";
 
 export const LoginForm = () => {
   const router = useRouter();

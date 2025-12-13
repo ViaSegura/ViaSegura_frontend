@@ -8,7 +8,7 @@ import {
   heatmap,
   neighborhood,
   exportHeatmapData,
-} from "@viasegura/service/heatmap";
+} from "@viasegura/services/heatmap";
 
 global.atob = jest.fn((data) => data);
 global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
@@ -16,7 +16,7 @@ global.URL.revokeObjectURL = jest.fn();
 
 jest.spyOn(console, "error").mockImplementation(() => {});
 
-jest.mock("@viasegura/service/heatmap", () => ({
+jest.mock("@viasegura/services/heatmap", () => ({
   heatmap: jest.fn(),
   neighborhood: jest.fn(),
   exportHeatmapData: jest.fn(),
