@@ -50,7 +50,6 @@ export const LoginForm = () => {
           position: "bottom-right",
         });
         router.push("/heatmap");
-        router.refresh();
       } else {
         toast.error("Usuário ainda não cadastrado", {
           position: "bottom-right",
