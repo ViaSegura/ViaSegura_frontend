@@ -152,7 +152,7 @@ const Home = () => {
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-primary" />
                   <span>
-                    Identifique pontos críticos e padrões de acidentes.
+                    Identifique pontos críticos e padrões de sinistros.
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
