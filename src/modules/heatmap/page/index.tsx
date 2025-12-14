@@ -465,7 +465,7 @@ const HeatMap = () => {
 
               <Card className="shadow-soft">
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                  <CardTitle>Ações Rápidas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button
